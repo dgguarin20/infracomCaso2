@@ -25,7 +25,6 @@ public class Servidor {
 		while (continuar) {
 		
 			
-
 			ThreadServidor h = new ThreadServidor(ss.accept(), PUERTO);
 			
 			h.start();
