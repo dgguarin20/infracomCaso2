@@ -14,6 +14,7 @@ public class ThreadServidor extends Thread{
 	// defina un atributo identificador local de tipo int
 	public ThreadServidor(Socket pSocket,int pId) {
 		// asigne el valor a los atributos correspondientes
+		
 		sktCliente= pSocket;
 		idLocal=pId;
 
@@ -37,7 +38,7 @@ public class ThreadServidor extends Thread{
 		}
 	}
 	public void start()
-	{
+	{		
 		run();
 		
 	}
@@ -47,13 +48,17 @@ public class ThreadServidor extends Thread{
 
 		String inputLine, outputLine;
 		int estado = 0;
-
+	
 		while (estado < 3 && (inputLine = pIn.readLine()) != null) {
+
 			switch (estado) {
 			case 0:
+
 				if (inputLine.equalsIgnoreCase("HOLA")) {
-					outputLine = "LISTO";
+					outputLine = "INICIO";
+					pOut.println(outputLine);
 					estado++;
+					
 				} else {
 					outputLine = "ERROR-EsperabaHola";
 					estado = 0;

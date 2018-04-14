@@ -7,7 +7,7 @@ import java.net.Socket;
 
 
 public class Servidor {
-	public static int PUERTO = 2100;
+	public static int PUERTO = 8080;
 	public static int idthread ;
 
 
@@ -23,8 +23,12 @@ public class Servidor {
 			System.exit(-1);
 		}
 		while (continuar) {
+		
 			
-			new ThreadServidor(ss.accept(),idthread).start();
+
+			ThreadServidor h = new ThreadServidor(ss.accept(), PUERTO);
+			
+			h.start();
 			// incremente identificador de thread
 			idthread++;
 

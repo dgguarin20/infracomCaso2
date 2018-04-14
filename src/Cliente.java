@@ -7,8 +7,8 @@ import java.net.Socket;
 public class Cliente {
 
 
-	public static String ipMaquina= "157.253.201.166";
-	public static int Puerto = 2100;
+	public static String ipMaquina= "157.253.239.25";
+	public static int Puerto = 8080;
 
 
 	public static void main(String[] args) throws IOException {
@@ -29,6 +29,7 @@ public class Cliente {
 		}
 		BufferedReader stdIn = new BufferedReader(
 				new InputStreamReader(System.in));
+		
 		String fromServer;
 		String fromUser;
 		while (ejecutar) {
@@ -45,6 +46,7 @@ public class Cliente {
 				System.out.println("Servidor: " + fromServer);
 			}
 		}
+		
 		escritor.close();
 		lector.close();
 		// cierre el socket y la entrada estándar
