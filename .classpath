@@ -7,5 +7,7 @@
 	<classpathentry kind="lib" path="lib/bcprov-jdk15on-155.jar"/>
 	<classpathentry kind="lib" path="lib/Servidorcs.jar"/>
 	<classpathentry kind="lib" path="lib/Servidorss.jar"/>
+	<classpathentry kind="lib" path="C:/Users/David/Documents/Bluetooth/infracom/infracomCaso2/lib/bcpkix-jdk15on-158.jar"/>
+	<classpathentry kind="lib" path="C:/Users/David/Documents/Bluetooth/infracom/infracomCaso2/lib/bcprov-jdk15on-158.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

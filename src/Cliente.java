@@ -10,8 +10,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
  */
 
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.math.BigInteger;
@@ -25,6 +29,7 @@ import java.security.PrivateKey;
 import java.security.SecureRandom;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.sql.Date;
 import java.util.ArrayList;
@@ -56,8 +61,8 @@ import org.bouncycastle.x509.extension.*;
 public class Cliente {
 
 
-	public static String ipMaquina= "157.253.239.25";
-	public static int Puerto = 8080;
+	public static String ipMaquina= "192.168.0.11";
+	public static int Puerto = 8051;
 	
 
 	public static void main(String[] args) throws IOException {
@@ -136,41 +141,39 @@ public class Cliente {
 					e.printStackTrace();
 				}
 				estado++;
+				fromServer= lector.readLine();
+				fromServer= lector.readLine();
+				fromServer= lector.readLine();
+				fromServer= lector.readLine();
+				fromServer= lector.readLine();
+				
 				
 			}
 			else if(estado==3)
 			{
-				if((fromServer = lector.readLine()) != null)
-				{
-					if(fromServer.equals("CERTSRV"))
-					{
-						fromUser = "OK";
-						escritor.println();
-						estado++;
-					}
-					else
-					{
-						fromUser = "ERROR";
-						escritor.println();
-						estado=0;
-					}
-				}
-				else
-				{
-					fromUser = "ERROR";
-					escritor.println();
-					estado++;
-				}
 				
+				
+				escritor.println("ESTADO:OK");
+				estado ++;
 			}
 			else if(estado==4)
 			{
-
+				String meh = "INICIO:";
 				fromServer = lector.readLine();
-				System.out.println("Servidor: " + fromServer);
 				
+				while(!fromServer.contains(meh))
+				{
+					fromServer = lector.readLine();
+				}
+				
+				String[] imp = fromServer.split(meh);
+				fromServer = imp[1];
+
+
+			
 				try {
-					byte[] desifrar = decifrarClaveSimetrica(DatatypeConverter.parseHexBinary(fromServer), codigos);
+					byte[] decifrar = decifrarClaveSimetrica(DatatypeConverter.parseHexBinary(fromServer), codigos);
+
 					
 					
 				} catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException
@@ -239,14 +242,23 @@ public class Cliente {
 		KeyPair keypair = generadorKey.generateKeyPair();
 		
 
-		
 		String symetrico = (String) c.get(1);
 		Cipher ci = Cipher.getInstance(symetrico);
 		ci.init(2, keypair.getPrivate());
 		return ci.doFinal(a);
 		
 		
-		
 	}
+	private static byte[] cifrarClaveSimetrica(String a, String sim, Key llave) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException
+	{
+
+		byte[] b = DatatypeConverter.parseHexBinary(a);
+		String symetrico = sim;
+		Cipher ci = Cipher.getInstance(symetrico);
+		ci.init(1, llave);
+		
+		return ci.doFinal(b);
+	}
+	
 
 }
