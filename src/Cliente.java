@@ -38,6 +38,7 @@ import java.util.Random;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
 import javax.xml.bind.DatatypeConverter;
 
@@ -58,6 +59,8 @@ import org.bouncycastle.x509.extension.*;
 
 
 
+
+
 public class Cliente {
 
 
@@ -71,7 +74,8 @@ public class Cliente {
 		Socket sock = null;
 		PrintWriter escritor = null;
 		BufferedReader lector = null;
-		String posicion = "41 24.2028, 2 10.4418";
+		String posicion = "41242028210441";
+		String d = "AES";
 		
 		try {
 			sock = new Socket(ipMaquina, Puerto);
@@ -168,12 +172,32 @@ public class Cliente {
 				
 				String[] imp = fromServer.split(meh);
 				fromServer = imp[1];
-
+				System.out.println(fromServer);
 
 			
 				try {
 					byte[] decifrar = decifrarClaveSimetrica(DatatypeConverter.parseHexBinary(fromServer), codigos);
-
+					String de = DatatypeConverter.printHexBinary(decifrar);
+					
+					
+					KeyPairGenerator generadorKey = KeyPairGenerator.getInstance("RSA");
+					generadorKey.initialize(1024, new SecureRandom());
+					KeyPair keypair = generadorKey.generateKeyPair();
+					
+					byte[] dec = DatatypeConverter.parseHexBinary(posicion);
+					
+					
+					byte[] cifrar = cifrarClaveSimetrica(dec, d, keypair.getPrivate())	;
+					
+					String comb = "ACT1:"+DatatypeConverter.printHexBinary(cifrar);
+					
+					Mac m = Mac.getInstance("HMACSHA1");
+					m.init(keypair.getPublic());
+					byte[] bytes = m.doFinal(cifrar);
+					String enviar = DatatypeConverter.printHexBinary(decifrar);
+					escritor.println(comb);
+					escritor.println(enviar);
+					
 					
 					
 				} catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException
@@ -242,22 +266,21 @@ public class Cliente {
 		KeyPair keypair = generadorKey.generateKeyPair();
 		
 
-		String symetrico = (String) c.get(1);
-		Cipher ci = Cipher.getInstance(symetrico);
+		String sime = (String) "RSA";
+		Cipher ci = Cipher.getInstance(sime);
 		ci.init(2, keypair.getPrivate());
-		return ci.doFinal(a);
+		return a;
 		
 		
 	}
-	private static byte[] cifrarClaveSimetrica(String a, String sim, Key llave) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException
+	private static byte[] cifrarClaveSimetrica(byte[] a, String sim, Key llave) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException
 	{
 
-		byte[] b = DatatypeConverter.parseHexBinary(a);
-		String symetrico = sim;
+		
+		String symetrico = "RSA";
 		Cipher ci = Cipher.getInstance(symetrico);
 		ci.init(1, llave);
-		
-		return ci.doFinal(b);
+		return ci.doFinal(a);
 	}
 	
 
