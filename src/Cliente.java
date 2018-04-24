@@ -10,12 +10,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
  */
 
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.math.BigInteger;
@@ -25,15 +21,12 @@ import java.security.Key;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
 import java.security.SecureRandom;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.sql.Date;
 import java.util.ArrayList;
-import java.util.Random;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -44,27 +37,16 @@ import javax.xml.bind.DatatypeConverter;
 
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
-import org.bouncycastle.asn1.x509.X509Name;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
-import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
-import org.bouncycastle.x509.*;
-import org.bouncycastle.x509.extension.*;
-
-
-
-
-
 
 public class Cliente {
 
-
-	public static String ipMaquina= "192.168.0.11";
+	public static String ipMaquina= "192.168.56.1";
 	public static int Puerto = 8051;
 	
 
@@ -75,8 +57,8 @@ public class Cliente {
 		PrintWriter escritor = null;
 		BufferedReader lector = null;
 		String posicion = "41242028210441";
-		String d = "AES";
-		
+		ArrayList<String> codigos = new ArrayList<>();
+
 		try {
 			sock = new Socket(ipMaquina, Puerto);
 			escritor = new PrintWriter(sock.getOutputStream(), true);
@@ -89,7 +71,6 @@ public class Cliente {
 		BufferedReader stdIn = new BufferedReader(
 				new InputStreamReader(System.in));
 		int estado = 0;
-		ArrayList codigos = new ArrayList();
 		String fromServer;
 		String fromUser;
 		while (ejecutar) {
@@ -116,7 +97,7 @@ public class Cliente {
 					String[]n = fromUser.split(":");
 					for(int i = 0; i<n.length;i++)
 					{
-						codigos.add(n[i]);
+						codigos.add(n[i]); System.out.println(n[i]);
 					}
 
 				}
@@ -132,14 +113,14 @@ public class Cliente {
 					escritor.println(fromUser);
 				}
 				System.out.println("Ahora se enviara su info en bytes ");
-				
+
 				try {
-					java.security.cert.X509Certificate cert = cambiobytes();
+					java.security.cert.X509Certificate cert = cambiobytes(codigos);
 					byte[] mybyte = cert.getEncoded();
-					
+
 					sock.getOutputStream().write(mybyte);
 					sock.getOutputStream().flush();
-					
+
 				} catch (CertificateEncodingException | NoSuchAlgorithmException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -150,13 +131,11 @@ public class Cliente {
 				fromServer= lector.readLine();
 				fromServer= lector.readLine();
 				fromServer= lector.readLine();
-				
-				
+
+
 			}
 			else if(estado==3)
 			{
-				
-				
 				escritor.println("ESTADO:OK");
 				estado ++;
 			}
@@ -164,73 +143,66 @@ public class Cliente {
 			{
 				String meh = "INICIO:";
 				fromServer = lector.readLine();
-				
+
 				while(!fromServer.contains(meh))
 				{
 					fromServer = lector.readLine();
 				}
-				
-				String[] imp = fromServer.split(meh);
+
+				String[] imp = fromServer.split(":");
 				fromServer = imp[1];
 				System.out.println(fromServer);
 
-			
+
 				try {
+					System.out.println("llegó");
 					byte[] decifrar = decifrarClaveSimetrica(DatatypeConverter.parseHexBinary(fromServer), codigos);
 					String de = DatatypeConverter.printHexBinary(decifrar);
-					
-					
-					KeyPairGenerator generadorKey = KeyPairGenerator.getInstance("RSA");
+
+					KeyPairGenerator generadorKey = KeyPairGenerator.getInstance((String) codigos.get(2));
 					generadorKey.initialize(1024, new SecureRandom());
 					KeyPair keypair = generadorKey.generateKeyPair();
-					
+
 					byte[] dec = DatatypeConverter.parseHexBinary(posicion);
-					
-					
-					byte[] cifrar = cifrarClaveSimetrica(dec, d, keypair.getPrivate())	;
-					
+
+					String d = codigos.get(1);
+
+					byte[] cifrar = cifrarClaveSimetrica(dec, d, keypair.getPrivate(), codigos)	;
+
 					String comb = "ACT1:"+DatatypeConverter.printHexBinary(cifrar);
-					
-					Mac m = Mac.getInstance("HMACSHA1");
+
+					Mac m = Mac.getInstance((String) codigos.get(3));
 					m.init(keypair.getPublic());
 					byte[] bytes = m.doFinal(cifrar);
 					String enviar = DatatypeConverter.printHexBinary(decifrar);
 					escritor.println(comb);
 					escritor.println(enviar);
-					
-					
-					
+
+
+
 				} catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException
 						| IllegalBlockSizeException | BadPaddingException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				
-				
-				
-				
+
 			}
 
 		}
 		//  ALGORITMOS:AES:RSA:HMACSHA1
 		escritor.close();
 		lector.close();
-		// cierre el socket y la entrada estándar
 		sock.close();
 		stdIn.close();
 
 	}
 
-	@SuppressWarnings("depreciation")
-	private static X509Certificate cambiobytes() throws NoSuchAlgorithmException {
-		
-	
-		
-		KeyPairGenerator generadorKey = KeyPairGenerator.getInstance("RSA");
+	private static X509Certificate cambiobytes(ArrayList<String> c) throws NoSuchAlgorithmException {
+KeyPairGenerator generadorKey = KeyPairGenerator.getInstance(c.get(2));
 		generadorKey.initialize(1024, new SecureRandom());
 		KeyPair keypair = generadorKey.generateKeyPair();
-		
-		
+
+
 		SubjectPublicKeyInfo publicKeyInfo = SubjectPublicKeyInfo.getInstance(keypair.getPublic().getEncoded());
 		BigInteger a = BigInteger.valueOf(new Long(123456723));
 		X500Name nombre = new X500Name("CN=Cliente");
@@ -238,7 +210,7 @@ public class Cliente {
 		Date Despues = new Date(System.currentTimeMillis()+(1000L*3600*24*365*100));
 		X500Name nombre2 = new X500Name("CN=Servidor");
 		X509v3CertificateBuilder myX509v3CertBuilder = new X509v3CertificateBuilder(nombre, a, antes, Despues, nombre2, publicKeyInfo);
-		
+
 
 		try {
 			ContentSigner signer;
@@ -246,42 +218,36 @@ public class Cliente {
 			X509CertificateHolder certHolder = myX509v3CertBuilder.build(signer);
 			X509Certificate cert = (new JcaX509CertificateConverter()).getCertificate(certHolder);
 			return cert;
-			
+
 		} catch (CertificateException | OperatorCreationException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		return null;
 
-		
-		
+
+
 
 	}
-	private static byte[] decifrarClaveSimetrica(byte[] a , ArrayList c) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException
+	private static byte[] decifrarClaveSimetrica(byte[] a , ArrayList<String> c) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException
 	{
-		
-		KeyPairGenerator generadorKey = KeyPairGenerator.getInstance("RSA");
+
+		KeyPairGenerator generadorKey = KeyPairGenerator.getInstance(c.get(2));
 		generadorKey.initialize(1024, new SecureRandom());
 		KeyPair keypair = generadorKey.generateKeyPair();
-		
-
-		String sime = (String) "RSA";
-		Cipher ci = Cipher.getInstance(sime);
+		Cipher ci = Cipher.getInstance(c.get(2));
 		ci.init(2, keypair.getPrivate());
 		return a;
-		
-		
-	}
-	private static byte[] cifrarClaveSimetrica(byte[] a, String sim, Key llave) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException
-	{
 
-		
-		String symetrico = "RSA";
-		Cipher ci = Cipher.getInstance(symetrico);
+
+	}
+	private static byte[] cifrarClaveSimetrica(byte[] a, String sim, Key llave, ArrayList<String> c) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException
+	{
+		Cipher ci = Cipher.getInstance(c.get(2));
 		ci.init(1, llave);
 		return ci.doFinal(a);
 	}
-	
+
 
 }
