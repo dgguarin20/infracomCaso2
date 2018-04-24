@@ -97,7 +97,7 @@ public class Cliente {
 					String[]n = fromUser.split(":");
 					for(int i = 0; i<n.length;i++)
 					{
-						codigos.add(n[i]); System.out.println(n[i]);
+						codigos.add(n[i]); 
 					}
 
 				}
@@ -131,8 +131,6 @@ public class Cliente {
 				fromServer= lector.readLine();
 				fromServer= lector.readLine();
 				fromServer= lector.readLine();
-
-
 			}
 			else if(estado==3)
 			{
@@ -155,10 +153,9 @@ public class Cliente {
 
 
 				try {
-					System.out.println("llegó");
-					byte[] decifrar = decifrarClaveSimetrica(DatatypeConverter.parseHexBinary(fromServer), codigos);
-					String de = DatatypeConverter.printHexBinary(decifrar);
-
+					byte[] descifrar = decifrarClaveSimetrica(DatatypeConverter.parseHexBinary(fromServer), codigos);	System.out.println("se puteó");
+					String de = DatatypeConverter.printHexBinary(descifrar); System.out.println(de);
+					System.out.println("se puteó x1000");
 					KeyPairGenerator generadorKey = KeyPairGenerator.getInstance((String) codigos.get(2));
 					generadorKey.initialize(1024, new SecureRandom());
 					KeyPair keypair = generadorKey.generateKeyPair();
@@ -174,20 +171,16 @@ public class Cliente {
 					Mac m = Mac.getInstance((String) codigos.get(3));
 					m.init(keypair.getPublic());
 					byte[] bytes = m.doFinal(cifrar);
-					String enviar = DatatypeConverter.printHexBinary(decifrar);
+					String enviar = DatatypeConverter.printHexBinary(descifrar);
 					escritor.println(comb);
 					escritor.println(enviar);
-
-
 
 				} catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException
 						| IllegalBlockSizeException | BadPaddingException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-
 			}
-
 		}
 		//  ALGORITMOS:AES:RSA:HMACSHA1
 		escritor.close();
@@ -226,20 +219,16 @@ KeyPairGenerator generadorKey = KeyPairGenerator.getInstance(c.get(2));
 
 		return null;
 
-
-
-
 	}
 	private static byte[] decifrarClaveSimetrica(byte[] a , ArrayList<String> c) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException
 	{
-
 		KeyPairGenerator generadorKey = KeyPairGenerator.getInstance(c.get(2));
 		generadorKey.initialize(1024, new SecureRandom());
 		KeyPair keypair = generadorKey.generateKeyPair();
 		Cipher ci = Cipher.getInstance(c.get(2));
-		ci.init(2, keypair.getPrivate());
-		return a;
-
+		ci.init(Cipher.DECRYPT_MODE, keypair.getPrivate());
+		byte[] descifrado = ci.doFinal(a);
+		return descifrado;
 
 	}
 	private static byte[] cifrarClaveSimetrica(byte[] a, String sim, Key llave, ArrayList<String> c) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException
